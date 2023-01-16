@@ -1,26 +1,63 @@
-if (typeof __dirname === 'undefined') global.__dirname = '/'
-if (typeof __filename === 'undefined') global.__filename = ''
+/* eslint-disable no-global-assign */
+/* eslint-disable no-buffer-constructor */
+/* eslint-disable global-require */
+/* eslint-disable no-restricted-syntax */
+import 'react-native-get-random-values';
+import '@ethersproject/shims';
+import 'react-native-url-polyfill/auto';
+
+import {fetch as fetchPolyfill} from 'whatwg-fetch';
+
+// If using the crypto shim, uncomment the following line to ensure
+// crypto is loaded first, so it can populate global.crypto
+require('crypto');
+
+if ('ArrayBuffer' in global) console.log('ArrayBuffer in global');
+else console.log('ArrayBuffer not in global');
+
+if (typeof __dirname === 'undefined') global.__dirname = '/';
+if (typeof __filename === 'undefined') global.__filename = '';
 if (typeof process === 'undefined') {
-  global.process = require('process')
+  global.process = require('process');
 } else {
-  const bProcess = require('process')
-  for (var p in bProcess) {
+  const bProcess = require('process');
+  for (const p in bProcess) {
     if (!(p in process)) {
-      process[p] = bProcess[p]
+      console.log('replacing process: ', p);
+      process[p] = bProcess[p];
     }
   }
 }
 
-process.browser = false
-if (typeof Buffer === 'undefined') global.Buffer = require('buffer').Buffer
+fetch = fetchPolyfill;
+global.fetch = fetchPolyfill;
 
-// global.location = global.location || { port: 80 }
-const isDev = typeof __DEV__ === 'boolean' && __DEV__
-process.env['NODE_ENV'] = isDev ? 'development' : 'production'
-if (typeof localStorage !== 'undefined') {
-  localStorage.debug = isDev ? '*' : ''
+if (typeof btoa === 'undefined') {
+  global.btoa = function (str) {
+    return new Buffer(str, 'binary').toString('base64');
+  };
 }
 
-// If using the crypto shim, uncomment the following line to ensure
-// crypto is loaded first, so it can populate global.crypto
-// require('crypto')
+if (typeof atob === 'undefined') {
+  global.atob = function (b64Encoded) {
+    return new Buffer(b64Encoded, 'base64').toString('binary');
+  };
+}
+
+process.browser = false;
+if (typeof Buffer === 'undefined') global.Buffer = require('buffer').Buffer;
+
+// global.location = global.location || { port: 80 }
+// eslint-disable-next-line no-undef
+const isDev = typeof __DEV__ === 'boolean' && __DEV__;
+
+// SEE: (https://github.com/facebook/react-native/issues/7607)
+Object.assign(process.env, {NODE_ENV: isDev ? 'development' : 'production'});
+// eslint-disable-next-line dot-notation
+if (typeof localStorage !== 'undefined') {
+  localStorage.debug = isDev ? '*' : '';
+}
+
+Intl.NumberFormat.prototype.formatToParts = function (number) {
+  return [{type: 'integer', value: Math.floor(number).toFixed(0)}];
+};
